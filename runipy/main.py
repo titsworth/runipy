@@ -29,6 +29,8 @@ def main():
             help='output an HTML snapshot of the notebook')
     parser.add_argument('--pylab', action='store_true',
             help='start notebook with pylab enabled')
+    parser.add_argument('--initvars',
+            help='start notebook with pylab enabled')
     args = parser.parse_args()
 
 
@@ -43,8 +45,11 @@ def main():
     if not args.quiet:
         logging.basicConfig(level=logging.DEBUG, format=log_format, datefmt=log_datefmt)
 
+    initvars_dict = None
+    if args.initvars:
+        initvars_dict = dict([arg.split('=', 1) for arg in args.initvars.split()])
 
-    nb_runner = NotebookRunner(args.input_file, args.pylab)
+    nb_runner = NotebookRunner(args.input_file, args.pylab, initvars_dict)
 
     exit_status = 0
     try:

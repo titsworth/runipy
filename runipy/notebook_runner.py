@@ -32,7 +32,7 @@ class NotebookRunner(object):
         'text/latex': 'latex',
     }
 
-    def __init__(self, nb_in, pylab):
+    def __init__(self, nb_in, pylab, init_vars=None):
         km = KernelManager()
         if pylab:
             km.start_kernel(extra_arguments=['--pylab=inline'])
@@ -55,6 +55,10 @@ class NotebookRunner(object):
 
         logging.info('Reading notebook %s', nb_in)
         self.nb = read(open(nb_in), 'json')
+        
+        # Insert initialization variables as first cell element
+        if init_vars is not None:
+             self.add_init_vars(init_vars)
 
 
     def run_cell(self, cell):
@@ -137,6 +141,30 @@ class NotebookRunner(object):
         '''
         for cell in self.iter_code_cells():
             self.run_cell(cell)
+
+
+    def add_init_vars(self, init_vars):
+        '''
+        Insert initialization variables as first cell where each
+        key is a python variable set to the specified value
+        '''
+        for ws in self.nb.worksheets:
+            # Build cell contents
+            code_string = "# Initialization Variables\n"
+            code_string += '\n'.join([key + ' = ' + value for key, value in init_vars.items()])
+            
+            # Build IPython cell contents
+            new_node = NotebookNode()
+            new_node[u'cell_type'] = u'code'
+            new_node[u'input'] = unicode(code_string)
+            new_node[u'language'] = u'python'
+            
+            # u'input': code_string,
+            # u'metadata': {},
+            # u'outputs': []
+                
+            # Insert Cell to beginning of notebook
+            ws.cells.insert(0, new_node)
 
     
     def save_notebook(self, nb_out):
