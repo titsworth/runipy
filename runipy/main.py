@@ -12,7 +12,6 @@ def main():
     # - output:
     #   - save HTML report (nbconvert)
 
-    print 'ko'
     log_format = '%(asctime)s %(message)s'
     log_datefmt = '%m/%d/%Y %I:%M:%S %p'
 
@@ -29,8 +28,7 @@ def main():
             help='output an HTML snapshot of the notebook')
     parser.add_argument('--pylab', action='store_true',
             help='start notebook with pylab enabled')
-    args = parser.parse_args()
-
+    args, other_args = parser.parse_known_args()
 
     if args.overwrite:
         if args.output_file is not None:
@@ -43,8 +41,18 @@ def main():
     if not args.quiet:
         logging.basicConfig(level=logging.DEBUG, format=log_format, datefmt=log_datefmt)
 
+    # Handle additional template variables
+    templatevars_dict = {}
+    for arg in other_args:
+        if '-T' in arg[:2]:
+            parts = arg.partition('=')
+            templatevars_dict[parts[0][2:]] = parts[2]
 
-    nb_runner = NotebookRunner(args.input_file, args.pylab)
+    if templatevars_dict:
+        tmpstr = ', '.join("%s=%r" % (key,val) for (key,val) in templatevars_dict.iteritems())
+        logging.info('Template Variables Processed: {%s}' % tmpstr)
+
+    nb_runner = NotebookRunner(args.input_file, args.pylab, templatevars_dict)
 
     exit_status = 0
     try:

@@ -40,6 +40,31 @@ To run a ``.ipynb`` file and genereate an ``HTML`` report, run::
 
     $ runipy MyNotebook.ipynb --html report.html
 
+IPython Notebook Templates
+---------------------------
+
+In some use cases, it is useful to have an "template" ``.ipynb`` file that expects
+some variables to be filled out. For example, in the case you want to run reports
+on many similar data sets using the same core IPython notebook. This can be 
+accomplished by having a "Report Template" ``.ipynb`` that uses uses template
+variables in code or non-code cells. Standard python template string formats 
+are used. For example::
+
+	$variable
+	${variable}
+	
+To set the values for the template variables, specify the variable name and value 
+on the command line using the syntax ``-T[var]=[val]``. For example::
+
+    $ runipy ReportTemplate.ipynb OutputNotebook.ipynb -Tvar1=1 -Tvar2='Val 2'
+
+This templated processing is targeted towards batch scripts that will iterate
+over numerous data sets and execute the template notebook for each data set,
+resulting in a fully processed notebook or a report. The command line interface
+for runipy can be bypassed altogether and new "wrapper" scripts can be generated
+around the core ``notebook_runner.py`` module. To use ``notebook_runner``, just
+pass the variable/value pairs as a dictionary to the NotebookRunner constructor.
+
 Credit
 ------
 

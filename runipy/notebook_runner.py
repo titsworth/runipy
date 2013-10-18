@@ -10,6 +10,7 @@ except:
 import platform
 from time import sleep
 import logging
+from string import Template
 
 from IPython.nbformat.current import read, write, NotebookNode
 from IPython.kernel import KernelManager
@@ -32,7 +33,7 @@ class NotebookRunner(object):
         'text/latex': 'latex',
     }
 
-    def __init__(self, nb_in, pylab):
+    def __init__(self, nb_in, pylab, templatevars=None):
         km = KernelManager()
         if pylab:
             km.start_kernel(extra_arguments=['--pylab=inline'])
@@ -55,12 +56,18 @@ class NotebookRunner(object):
 
         logging.info('Reading notebook %s', nb_in)
         self.nb = read(open(nb_in), 'json')
+        
+        if templatevars is None:
+            self.templatevars = {}
+        else:
+            self.templatevars = templatevars
 
 
     def run_cell(self, cell):
         '''
         Run a notebook cell and update the output of that cell in-place.
         '''
+        
         logging.info('Running cell:\n%s\n', cell.input)
         self.shell.execute(cell.input)
         reply = self.shell.get_msg()
@@ -126,6 +133,16 @@ class NotebookRunner(object):
         '''
         for ws in self.nb.worksheets:
             for cell in ws.cells:
+
+                # Replace contents with template variables if they exist
+                if self.templatevars:
+                    if cell.cell_type == 'code':
+                        tmp = Template(cell.input)
+                        cell.input = tmp.safe_substitute(self.templatevars)
+                    else:
+                        tmp = Template(cell.source)
+                        cell.source = tmp.safe_substitute(self.templatevars)
+
                 if cell.cell_type == 'code':
                     yield cell
 
